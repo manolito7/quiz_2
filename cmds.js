@@ -150,9 +150,32 @@ exports.editCmd = (rl, id) => {
  * @param rl Objeto readline usado para implementar el CLI.
  * @param id Clave del quiz a probar.
  */
-exports.testCmd = (rl, id) => {
-    log('Probar el quiz indicado.', 'red');
-    rl.prompt();
+exports.testCmd = (rl,id) => {
+    if(typeof id === "undefined") {
+        errorlog(` Falta el parámetro id.`);
+        rl.prompt();
+    }else{
+        try{
+            const quiz = model.getByIndex(id);
+            rl.question(colorize(quiz.question + "\n", 'green'), answer => {
+                if(answer.trim().toLowerCase() === quiz.answer.trim().toLowerCase()){
+                    log ("Su respuesta es correct:");
+                    biglog('CORRECT', 'yellow');
+                    rl.prompt();
+                } else if (answer.trim().toLowerCase()!== quiz.answer.toLowerCase()){
+                    log("Su respuesta es:");
+                    biglog('INCORRECT','red');
+                    rl.prompt();
+
+                }
+            });
+        } catch (error) {
+            errorlog(error.message);
+            rl.prompt();
+
+        }
+    }
+
 };
 
 
@@ -163,8 +186,38 @@ exports.testCmd = (rl, id) => {
  * @param rl Objeto readline usado para implementar el CLI.
  */
 exports.playCmd = rl => {
-    log('Jugar.', 'red');
-    rl.prompt();
+
+    let score= 0;
+    let toBeResolved = [];
+    for(i=0;i<model.count();i++){
+        toBeResolved.push(model.getByIndex(i));
+    }
+    const playOne = () => {
+        if(toBeResolved.length === 0){
+            log("No hay más preguntas"+ "\n");
+            log("Fin del examen. Aciertos:");
+            biglog(`${score}`,'blue');
+            rl.prompt();
+        } else {
+            let idx = Math.floor(Math.random()* toBeResolved.length);
+            const quiz1 = toBeResolved[idx];
+            toBeResolved.splice(idx,1);
+            rl.question(colorize(quiz1.question + "\n", 'red'), answer => {
+                if(answer.trim().toLowerCase() === quiz1.answer.toLowerCase()){
+                    score++;
+                    log(`CORRECTO - Lleva ${score} aciertos`);
+                    playOne();
+                } else if (answer.trim().toLowerCase() !== quiz1.answer.toLowerCase()){
+                    biglog("INCORRECTO");
+                    log("Fin del examen. Aciertos:");
+                    biglog(`${score}`,'blue');
+                    rl.prompt();
+                }
+            });
+        }
+    };
+    playOne();
+
 };
 
 
@@ -175,8 +228,8 @@ exports.playCmd = rl => {
  */
 exports.creditsCmd = rl => {
     log('Autores de la práctica:');
-    log('Nombre 1', 'green');
-    log('Nombre 2', 'green');
+    log('Manuel Naharro Melgar', 'green');
+
     rl.prompt();
 };
 
